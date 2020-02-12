@@ -1,31 +1,27 @@
 package io.github.mnyudina.motifs.algorithms.subgraph;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Map.Entry;
-
-
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.util.EdgeType;
 import io.github.mnyudina.motifs.algorithms.GraphStatsOperation;
 import io.github.mnyudina.motifs.exception.GraphStatsException;
 import io.github.mnyudina.motifs.exception.UnsupportedEdgeTypeException;
-import io.github.mnyudina.motifs.graph.MyDirectedSparseGraph;
+import io.github.mnyudina.motifs.graph.MySparseGraph;
+
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * This is parallel version of 4-size directed subgraphs counter which uses
- * random carcasses sampling algorithm.
+ * random frame sampling algorithm.
  *
  * @author Gleepa
  */
-public class RandMSF4Dir<V, E> implements GraphStatsOperation {
-    private boolean isParallel;
+public class RandSF4_streams<V, E> implements GraphStatsOperation {
+    private boolean isParallel=false;
     Map<Integer, VertexLayerParameters<V>> vertexLayers;
-    Map<Integer, EdgeLayerParameters<E>> edgeLayers;
+    Map<E, Double> edgeProbs;
     double[] massKoefL = {0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 2, 1, 1, 2, 2, 4, 6, 6, 0, 0, 1, 1, 1, 1, 1, 1, 2,
             1, 2, 1, 1, 2, 2, 2, 2, 0, 1, 1, 2, 1, 2, 1, 1, 2, 2, 2, 2, 2, 4, 6, 4, 6, 2, 2, 6, 6, 6, 6, 1, 2, 2, 2, 4,
             6, 4, 6, 6, 6, 6, 4, 6, 6, 1, 2, 6, 2, 6, 6, 6, 12, 12, 6, 6, 12, 12, 12, 12, 12, 1, 1, 1, 2, 1, 2, 1, 2, 1,
@@ -41,7 +37,7 @@ public class RandMSF4Dir<V, E> implements GraphStatsOperation {
             2, 2, 2, 2, 4, 4, 2, 4, 4, 4, 4, 4, 4, 4, 2, 4, 4, 2, 4, 4, 4, 4, 4, 4, 2, 2, 2, 2, 1, 2, 2, 4, 4, 4, 4, 4,
             4, 4, 4, 4, 4, 4, 4};
 
-    private MyDirectedSparseGraph<V, E> graph;
+    private final MySparseGraph<V, E> graph;
 
     final double motifs[] = new double[218];
     final double motifs_long[] = new double[218];
@@ -51,8 +47,8 @@ public class RandMSF4Dir<V, E> implements GraphStatsOperation {
     final double sigmas[] = new double[218];
 
     private double numberOfRuns;
-    private double numberOfRunsLapka;
-    private double numberOfRunsScoba;
+    //private double numberOfRunsLapka;
+    //private double numberOfRunsScoba;
 
 
     double numberOfCarcasScobka = 0;
@@ -236,7 +232,12 @@ public class RandMSF4Dir<V, E> implements GraphStatsOperation {
 
     Random randomGenerator = new Random();
 
-    public int searchLapka() {
+    /**
+     * Method does random selection of branch-frame
+     *
+     * @return code of random motif with 4 verticies
+     */
+    private int searchLapka() {
         double randomDoubleValue = randomGenerator.nextDouble();
         while (randomDoubleValue == 0.0) {
             randomDoubleValue = randomGenerator.nextDouble();
@@ -257,79 +258,91 @@ public class RandMSF4Dir<V, E> implements GraphStatsOperation {
         V v1 = selectedVertexLayer.getVerticies()
                 .get(randomGenerator.nextInt(selectedVertexLayer.getVerticies().size()));
         V v2, v3, v4;
-		// ускорить в соответсвии с алгоритмом через индексы!!!!
-		List<E> e1List = new LinkedList<>(graph.getIncidentEdges(v1));
-		do {
-        // Choose 3 successors of the vertex randomly
-        int randomIntValue = randomGenerator.nextInt(e1List.size());
-        v2 = graph.getOpposite(v1,e1List.get(randomIntValue));
-        randomIntValue = randomGenerator.nextInt(e1List.size());
-        v3 = graph.getOpposite(v1,e1List.get(randomIntValue));
-        randomIntValue = randomGenerator.nextInt(e1List.size());
-        v4 = graph.getOpposite(v1,e1List.get(randomIntValue));
-        }   while (!graph.isNeighbor(v2, v3) && !graph.isNeighbor(v2, v4) &&  !graph.isNeighbor(v3, v4));
+        // do
+        {
+            // Choose 3 successors of the vertex randomly
+            List<V> v1List = new LinkedList<>(graph.getNeighbors(v1));
+            int randomIntValue = randomGenerator.nextInt(v1List.size());
+            v2 = v1List.remove(randomIntValue);
+            randomIntValue = randomGenerator.nextInt(v1List.size());
+            v3 = v1List.remove(randomIntValue);
+            randomIntValue = randomGenerator.nextInt(v1List.size());
+            v4 = v1List.remove(randomIntValue);
+        }
+        /*
+         * while (!graph.isNeighbor(v2,v3) && !graph.isNeighbor(v2,v4) &&
+         * !graph.isNeighbor(v3,v4));
+         */
+        {
 
-
-        V[] vert = (V[]) new Object[4];
-        vert[0] = v1;
-        vert[1] = v2;
-        vert[2] = v3;
-        vert[3] = v4;
-        int code = 0;
-        for (int i = 0; i < vert.length - 1; i++) {
-            for (int j = i + 1; j < vert.length; j++) {
-                E o1 = graph.findEdge(vert[i], vert[j]);
-                if (o1 != null)
-                    code |= arr_idx[4 * i + j];
-                E o2 = graph.findEdge(vert[j], vert[i]);
-                if (o2 != null)
-                    code |= arr_idx[4 * j + i];
+            V[] vert = (V[]) new Object[4];
+            vert[0] = v1;
+            vert[1] = v2;
+            vert[2] = v3;
+            vert[3] = v4;
+            int code = 0;
+            for (int i = 0; i < vert.length - 1; i++) {
+                for (int j = i + 1; j < vert.length; j++) {
+                    E o1 = graph.findEdge(vert[i], vert[j]);
+                    if (o1 != null)
+                        code |= arr_idx[4 * i + j];
+                    E o2 = graph.findEdge(vert[j], vert[i]);
+                    if (o2 != null)
+                        code |= arr_idx[4 * j + i];
+                }
             }
+            return arrcode[code];
         }
-        return arrcode[code];
-    }
 
-    public int searchScobka() {
+    }
+    /**
+     * Method does random selection of path-frame
+     *
+     * @return code of random motif with 4 verticies
+     */
+    private int searchScobka() {
         double randomDoubleValue = randomGenerator.nextDouble();
-        while (randomDoubleValue == 0.0) {
-            randomDoubleValue = randomGenerator.nextDouble();
-        }
         double borderOfProbability = 0.0;
-        EdgeLayerParameters<E> selectedEdgeLayer = null;
+        //EdgeLayerParameters<E> selectedEdgeLayer = null;
 
         // Choose a layer of edges taking into account the probabilities of
         // layers selection
-        for (Entry<Integer, EdgeLayerParameters<E>> edgeLayer : edgeLayers.entrySet()) {
-            if (edgeLayer.getValue().getProbability() < 0) {
+        E selectedEdge=null;
+        for (Entry<E,Double> edge : edgeProbs.entrySet()) {
+            if (edge.getValue() < 0) {
                 throw new IllegalStateException("Negative probability!");
 
             }
-            borderOfProbability += edgeLayer.getValue().getProbability();
+            borderOfProbability += edge.getValue();
             if (randomDoubleValue < borderOfProbability) {
-                selectedEdgeLayer = edgeLayer.getValue();
+                selectedEdge = edge.getKey();
                 break;
             }
         }
 
         // Choose an edge from the layer of edges randomly
-        E selectedEdge = selectedEdgeLayer.getEdges().get(randomGenerator.nextInt(selectedEdgeLayer.getEdges().size()));
+        //  E selectedEdge = selectedEdgeLayer.getEdges().get(randomGenerator.nextInt(selectedEdgeLayer.getEdges().size()));
 
         // Get endpoints of the edge
         V v1 = graph.getEndpoints(selectedEdge).getFirst();
         V v2 = graph.getEndpoints(selectedEdge).getSecond();
-        V v3, v4;
 
         // Generate a list of successors of the endpoints
-        //List<E> neigbours1 = (List) graph.getNeighbors(v1);
-		List<E> neigbours1 = graph.getIncidentEdges(v1);
-		List<E> neigbours2 =  graph.getIncidentEdges(v2);
+        List<V> neigbours1 = new LinkedList<V>(graph.getNeighbors(v1));
+        List<V> neigbours2 = new LinkedList<V>(graph.getNeighbors(v2));
+        neigbours1.remove(v2);
+        neigbours2.remove(v1);
 
         // Choose 2 successors of the endpoints randomly
-        do {
-			v3 = graph.getOpposite(v1,neigbours1.get(randomGenerator.nextInt(neigbours1.size())));
-			v4 = graph.getOpposite(v2,neigbours2.get(randomGenerator.nextInt(neigbours2.size())));
-		}
-        while (!v3.equals(v2) && !v4.equals(v1));
+        V v3 = neigbours1.get(randomGenerator.nextInt(neigbours1.size()));
+        V v4 = neigbours2.get(randomGenerator.nextInt(neigbours2.size()));
+
+/*
+        if (v3.equals(v4) ){
+            System.out.println("dddd!");
+            return 0;
+        };
+*/
 
         V[] vert = (V[]) new Object[4];
         vert[0] = v1;
@@ -357,100 +370,126 @@ public class RandMSF4Dir<V, E> implements GraphStatsOperation {
      * @param numberOfRuns number of runs of sampling algorithm
      * @author Gleepa
      */
-    public RandMSF4Dir(Graph<V, E> graph, int numberOfRuns) {
-        this.graph = (MyDirectedSparseGraph) graph;
+    public RandSF4_streams(Graph<V, E> graph, int numberOfRuns) {
+        this.graph = (MySparseGraph) graph;
         //this.graph = (DirectedSparseGraph) graph;
         this.numberOfRuns = numberOfRuns;
 
     }
 
     /**
+     *
      * @throws UnsupportedEdgeTypeException
      * @author Gleepa
      */
     public void execute() throws GraphStatsException {
+        // only if DirectedEdges
         if (graph.getDefaultEdgeType() == EdgeType.UNDIRECTED) {
-            throw new UnsupportedEdgeTypeException("The  4-size subgraphs counter algorithm does not work with " + graph.getDefaultEdgeType() + " graph.");
+            throw new UnsupportedEdgeTypeException("The subgraphs counter which uses  MFS algorithm does not work with " + graph.getDefaultEdgeType() + " graph.");
         }
 
+//////////////////// Prepare Branch frames  ////////////////////////////////////
         Collection<V> vertices = graph.getVertices();
         vertexLayers = new HashMap<>();
-        int neibours;
-
-
+        //int neibours;
         for (V vertex : vertices) {
-            neibours = graph.getNeighborCount(vertex);
+            int neibours = graph.getNeighborCount(vertex);
             if (vertexLayers.get(neibours) == null) {
                 vertexLayers.put(neibours, new VertexLayerParameters<>());
             }
             vertexLayers.get(neibours).vertices.add(vertex);
         }
-
         // Calculate exact number of lapka
+        numberOfCarcasLapka  = (double)vertexLayers.entrySet().parallelStream().map((vertexLayer)->{
+            return vertexLayer.getValue().vertices.size() * vertexLayer.getKey()
+                    * (vertexLayer.getKey() - 1l) * (vertexLayer.getKey() - 2l) / 6l;
+        }).reduce(0l,(x,y)->x+y);
+
+
+    /*
         for (Entry<Integer, VertexLayerParameters<V>> vertexLayer : vertexLayers.entrySet()) {
             numberOfCarcasLapka += vertexLayer.getValue().vertices.size() * vertexLayer.getKey()
                     * (vertexLayer.getKey() - 1l) * (vertexLayer.getKey() - 2l) / 6l;
         }
-
+     */
         // Calculate probability of selection for each layer of the vertices
+       vertexLayers.entrySet().parallelStream().forEach(vertexLayer->{
+           vertexLayer.getValue().probability = (vertexLayer.getValue().vertices.size() * vertexLayer.getKey()
+                   * (vertexLayer.getKey() - 1l) * (vertexLayer.getKey() - 2l) / (6.0 * numberOfCarcasLapka));
+       });
+
+        /*
+
         for (Entry<Integer, VertexLayerParameters<V>> vertexLayer : vertexLayers.entrySet()) {
             vertexLayer.getValue().probability = (vertexLayer.getValue().vertices.size() * vertexLayer.getKey()
                     * (vertexLayer.getKey() - 1l) * (vertexLayer.getKey() - 2l) / (6.0 * numberOfCarcasLapka));
         }
-
+        */
+//////////////////// Prepare Path Frames  ////////////////////////////////////
         Collection<E> edges = graph.getEdges();
-        edgeLayers = new HashMap<>();
-        int numberOfPathsOfLengthThree;
+        edgeProbs = new HashMap<>();
+        numberOfCarcasScobka = 0.;
+        // Calculate overall number of the path-frames
+        numberOfCarcasScobka  = edges.parallelStream().map((E edge)->{
+            return (graph.getNeighborCount(graph.getEndpoints(edge).getFirst()) - 1.)
+                    *(graph.getNeighborCount(graph.getEndpoints(edge).getSecond()) - 1.);
+        }).reduce(0.,(x,y)->x+y);
 
 
+        /*for (E edge : edges) {
+            V v1 = graph.getEndpoints(edge).getFirst();
+            V v2 = graph.getEndpoints(edge).getSecond();
+            numberOfCarcasScobka = numberOfCarcasScobka+(graph.getNeighborCount(v1) - 1) * (graph.getNeighborCount(v2) - 1);
+        }*/
+
+
+
+        edgeProbs= edges.parallelStream().collect(Collectors.toMap(e -> e, e ->{
+            V v1 = graph.getEndpoints(e).getFirst();
+            V v2 = graph.getEndpoints(e).getSecond();
+            double path_frame_e = (graph.getNeighborCount(v1) - 1) * (graph.getNeighborCount(v2) - 1);
+            return path_frame_e/numberOfCarcasScobka;
+        }));
+
+
+    /*
         for (E edge : edges) {
             V v1 = graph.getEndpoints(edge).getFirst();
             V v2 = graph.getEndpoints(edge).getSecond();
-            numberOfPathsOfLengthThree = (graph.getNeighborCount(v1) - 1) * (graph.getNeighborCount(v2) - 1);
-            if (edgeLayers.get(numberOfPathsOfLengthThree) == null) {
-                edgeLayers.put(numberOfPathsOfLengthThree, new EdgeLayerParameters<>());
-            }
-            edgeLayers.get(numberOfPathsOfLengthThree).edges.add(edge);
+            double path_frame_e = (graph.getNeighborCount(v1) - 1) * (graph.getNeighborCount(v2) - 1);
+            edgeProbs.put(edge,path_frame_e/numberOfCarcasScobka);
+        }
+        */
+//////////////////// Statistical Experiments Making ////////////////////////////////////
+
+        Map<Integer, Integer> countsLapka , countsScoba; // How to write to an array directly?
+        countsLapka = Stream.iterate(0, i -> i).parallel().limit((int)numberOfRuns).
+                    map(x -> this.searchLapka()). collect(Collectors.toMap(w -> w, w -> 1, Integer::sum));
+
+        countsScoba = Stream.iterate(0, i -> i).parallel().limit((int)numberOfRuns).
+                map(x -> this.searchScobka()).collect(Collectors.toMap(w -> w, w -> 1, Integer::sum));
+
+        for(Entry<Integer,Integer> m:countsLapka.entrySet()){
+            motifsLapka[m.getKey()] = m.getValue();
+        }
+        for(Entry<Integer,Integer> m:countsScoba.entrySet()){
+            motifsScobka[m.getKey()] = m.getValue();
         }
 
-        // Calculate exact number of the graph's path of length three
-        for (Entry<Integer, EdgeLayerParameters<E>> edgeLayer : edgeLayers.entrySet()) {
-            numberOfCarcasScobka += edgeLayer.getValue().edges.size() * edgeLayer.getKey();
-        }
 
-        // Calculate probability of selection for each layer of the edges
-        for (Entry<Integer, EdgeLayerParameters<E>> edgeLayer : edgeLayers.entrySet()) {
-            edgeLayer.getValue().probability = (edgeLayer.getValue().edges.size() / (double) numberOfCarcasScobka
-                    * edgeLayer.getKey());
-        }
-
-
-        numberOfRunsLapka = numberOfRuns;
-        numberOfRunsScoba = numberOfRuns;
-        long t = System.currentTimeMillis();
-
-
-        for (int i = 0; i < numberOfRuns; i++) {
-            int x = searchLapka();
-            motifsLapka[x] = motifsLapka[x] + 1;
-        }
-
-        for (int i = 0; i < numberOfRuns; i++) {
-            int x = searchScobka();
-            motifsScobka[x] = motifsScobka[x] + 1;
-        }
+//////////////////// Results Processing ////////////////////////////////////
 
         double D1, D2, lyamda, D, Sigma;
         double sum = 0., num = 0.;
         for (int i = 0; i < motifs.length; i++) {
 
-            D1 = (numberOfCarcasScobka / numberOfRunsScoba) * (numberOfCarcasScobka / numberOfRunsScoba)
-                    * motifsScobka[i] / massKoefL[i] / massKoefL[i] * (1. - motifsScobka[i] / numberOfRunsScoba);
-            D2 = (numberOfCarcasLapka / numberOfRunsLapka) * (numberOfCarcasLapka / numberOfRunsLapka)
-                    * (motifsLapka[i] / massKoefR[i] / massKoefR[i]) * (1 - motifsLapka[i] / numberOfRunsLapka);
+            D1 = (numberOfCarcasScobka / numberOfRuns) * (numberOfCarcasScobka / numberOfRuns)
+                    * motifsScobka[i] / massKoefL[i] / massKoefL[i] * (1. - motifsScobka[i] / numberOfRuns);
+            D2 = (numberOfCarcasLapka / numberOfRuns) * (numberOfCarcasLapka / numberOfRuns)
+                    * (motifsLapka[i] / massKoefR[i] / massKoefR[i]) * (1 - motifsLapka[i] / numberOfRuns);
 
-            double n1 = motifsScobka[i] * (numberOfCarcasScobka / massKoefL[i] / numberOfRunsScoba);
-            double n2 = motifsLapka[i] * (numberOfCarcasLapka / massKoefR[i] / numberOfRunsLapka);
+            double n1 = motifsScobka[i] * (numberOfCarcasScobka / massKoefL[i] / numberOfRuns);
+            double n2 = motifsLapka[i] * (numberOfCarcasLapka / massKoefR[i] / numberOfRuns);
 
             if (n1 < -0.1 || n2 < -0.1)
                 throw new ArithmeticException();
@@ -487,14 +526,14 @@ public class RandMSF4Dir<V, E> implements GraphStatsOperation {
             }
 
         }
-
+//////////////////////////////           END       /////////////////////////////////////////////
     }
 
     public String toString() {
         String str = "id\t num\t (+/-) 3 sigma \n";
         for (int i = 0; i < motifs.length; i++) {
             if (motifs[i] != 0)
-                str = str + arrcode[i] + ":\t" + motifs[i] + "\t  (+/-)" + 3 * sigmas[i] + "\n";
+                str = str + i + ":\t" + motifs[i] + "\t  (+/-)" + 3 * sigmas[i] + "\n";
         }
         return str;
 
@@ -508,7 +547,8 @@ public class RandMSF4Dir<V, E> implements GraphStatsOperation {
             if (motifs[i] > 0.10)
                 // str = str+ (motifs[i]-3.*sigmas[i])+ " " + motifs[i]+" " +
                 // (motifs[i]+3.*sigmas[i])+ "\n";
-                ret = ret + motifs[i] + " \n";
+                ret = ret + "("+i+")"+motifs[i] + " \n";
+
         }
         return ret;
     }

@@ -1,27 +1,18 @@
 package io.github.mnyudina.motifs.algorithms.subgraph_myold;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Map.Entry;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 
 import edu.uci.ics.jung.graph.Graph;
-import edu.uci.ics.jung.graph.Hypergraph;
-import edu.uci.ics.jung.graph.util.EdgeType;
 import io.github.mnyudina.motifs.algorithms.Executor;
-import io.github.mnyudina.motifs.algorithms.subgraph.EdgeLayerParameters;
 import io.github.mnyudina.motifs.algorithms.subgraph.VertexLayerParameters;
 import io.github.mnyudina.motifs.exception.GraphStatsException;
 import io.github.mnyudina.motifs.exception.UnsupportedEdgeTypeException;

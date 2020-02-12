@@ -1,18 +1,18 @@
 package io.github.mnyudina.motifs;
 
-import edu.uci.ics.jung.graph.DirectedSparseGraph;
 import edu.uci.ics.jung.graph.Graph;
+import edu.uci.ics.jung.graph.SparseGraph;
 import io.github.mnyudina.motifs.algorithms.GraphStatsOperation;
-import io.github.mnyudina.motifs.algorithms.subgraph.RandMSF3Dir;
-import io.github.mnyudina.motifs.algorithms.subgraph.RandMSF4Dir;
+import io.github.mnyudina.motifs.algorithms.subgraph.*;
+import io.github.mnyudina.motifs.algorithms.subgraph_myold.RandMSF4DirOpt;
+import io.github.mnyudina.motifs.algorithms.subgraph_myold.RandSF4_old;
 import io.github.mnyudina.motifs.exception.GraphStatsException;
-import io.github.mnyudina.motifs.graph.AdjacencyListGraph;
 import io.github.mnyudina.motifs.graph.MyDirectedSparseGraph;
+import io.github.mnyudina.motifs.graph.MySparseGraph;
 import io.github.mnyudina.motifs.util.ArgumentParser;
 import io.github.mnyudina.motifs.util.FormatUtils;
 import io.github.mnyudina.motifs.util.ProgramParameters;
 
-import edu.uci.ics.jung.graph.Hypergraph;
 import edu.uci.ics.jung.graph.util.EdgeType;
 import edu.uci.ics.jung.io.PajekNetReader;
 
@@ -25,7 +25,13 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.summingInt;
 
 /**
  * @author Gleepa
@@ -71,13 +77,14 @@ public class Main {
             // TO DO
         }
         if (parameters.getIsThreeSizeSubgraphsCountSamplingRequestedFlag()) {
-            requestedOperation.add(new RandMSF3Dir<>(graph, parameters.getNumberOfRuns(),true));
+            requestedOperation.add(new RandFS3<>(graph, parameters.getNumberOfRuns(),true));
         }
         if (parameters.getIsFourSizeSubgraphsCountFullEnumerationRequestedFlag()) {
             // TO DO
         }
         if (parameters.getIsFourSizeSubgraphsCountSamplingRequestedFlag()) {
-            requestedOperation.add(new RandMSF4Dir<>(graph, parameters.getNumberOfRuns()));
+            //requestedOperation.add(new RandSF4<>(graph, parameters.getNumberOfRuns()));
+            requestedOperation.add(new RandSF4_streams<>(graph, parameters.getNumberOfRuns()));
         }
 
 
@@ -169,7 +176,9 @@ public class Main {
     private static Graph loadGraph(String path) throws IOException {
 
         //!FIX HERE myDirectedSparseGraph-------------------------------------------------
-        return new PajekNetReader<>(createIntegerFactory(), createIntegerFactory()).load(path, new MyDirectedSparseGraph<>());//AdjacencyListGraph
+       // return new PajekNetReader<>(createIntegerFactory(), createIntegerFactory()).load(path, new MyDirectedSparseGraph<>());//AdjacencyListGraph
+        return new PajekNetReader<>(createIntegerFactory(), createIntegerFactory()).load(path, new MySparseGraph<>());//AdjacencyListGraph
+
     }
 
     /**
@@ -221,21 +230,56 @@ public class Main {
     //_DEBUG
     public static void main_DEBUG(String[] args) throws IOException, GraphStatsException { // for DEBUG
         Graph<Integer, Integer> graph;
-        // graph = loadGraph("graphs\\PathwayCommons.net");
+        //String path="graphs\\PathwayCommons.net";
+       // String path="graphs\\my_polBlog.net";
+        String path="graphs\\GenReg.net";
+     //   String path="graphs\\MyAs.net";
 
-        graph = loadGraph("graphs\\my_polBlog.net");
+     //   graph= new PajekNetReader<>(createIntegerFactory(), createIntegerFactory()).load(path, new MyDirectedSparseGraph<>());//AdjacencyListGraph
+       graph=new PajekNetReader<>(createIntegerFactory(), createIntegerFactory()).load(path, new MySparseGraph<>());//AdjacencyListGraph
         // graph = initGraphEdgelistLong("C:\\1\\G+.txt");
-        long startTime = System.nanoTime();
 
-        RandMSF4Dir  p4= new RandMSF4Dir<>(graph,10000);//!
-        //RandMSF4Dir_new p4= new RandMSF4Dir_new<>(graph,100000);
+        System.out.println(graph.getEdgeCount());
+        System.out.println(graph.getVertexCount());
+        //System.out.println(graph);
+
+
+        long startTime = System.nanoTime();
+       // RandMSF4DirOpt p4= new RandMSF4DirOpt<>(graph,10000,true);
+      //  RandSF4_old p4= new RandSF4_old<>(graph,10000);
+        RandSF4 p4= new RandSF4<>(graph,10000);
+      // RandSF4_new2 p4= new RandSF4_new2<>(graph,10000);
+      // RandSF4_new p4= new RandSF4_new<>(graph,1000);
+       // RandMSF4Dir p4= new RandMSF4Dir<>(graph,1000);
+
+
         long t1=System.currentTimeMillis();
         p4.execute();
         System.out.println("dt="+FormatUtils.durationToHMS(System.nanoTime() - startTime));
-        //System.out.println(p4.toString());
+        System.out.println(p4.toString());
 
 
     }
+
+    public static void main3(String[] args) throws IOException {
+        Graph graph;
+        //graph = loadGraph("graphs\\my_polBlog.net");
+        graph = loadGraph("graphs\\PathwayCommons.net");
+
+        /*graph= new MySparseGraph<>();
+        graph.addEdge(1,1,2,EdgeType.DIRECTED);
+        graph.addEdge(4,2,1,EdgeType.DIRECTED);
+        graph.addEdge(2,1,3,EdgeType.DIRECTED);
+        graph.addEdge(3,2,3,EdgeType.DIRECTED);
+*/
+        System.out.println(graph.getEdgeCount());
+        System.out.println(graph.getVertexCount());
+      //  System.out.println(graph);
+
+
+
+    }
+
 
 
 

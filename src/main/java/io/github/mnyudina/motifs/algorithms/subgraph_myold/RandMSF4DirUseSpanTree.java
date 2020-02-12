@@ -12,7 +12,6 @@ import java.util.stream.Stream;
 
 import edu.uci.ics.jung.graph.Graph;
 import io.github.mnyudina.motifs.algorithms.Executor;
-import io.github.mnyudina.motifs.algorithms.subgraph.EdgeLayerParameters;
 import io.github.mnyudina.motifs.algorithms.subgraph.VertexLayerParameters;
 import io.github.mnyudina.motifs.exception.GraphStatsException;
 import io.github.mnyudina.motifs.exception.UnsupportedEdgeTypeException;

@@ -1,12 +1,6 @@
 package io.github.mnyudina.motifs.graph;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 
 import edu.uci.ics.jung.graph.DirectedSparseGraph;
 import org.apache.commons.collections15.Factory;
@@ -109,7 +103,7 @@ public class MyDirectedSparseGraph<V, E> extends AbstractTypedGraph<V, E> implem
 		return vertices.get(vertex).getSecond().values();
 	}
 
-	protected Collection<V> getPreds_internal(V vertex) {
+	protected Set<V> getPreds_internal(V vertex) {
 		return vertices.get(vertex).getFirst().keySet();
 	}
 
@@ -201,13 +195,14 @@ public class MyDirectedSparseGraph<V, E> extends AbstractTypedGraph<V, E> implem
 		return vertices.size();
 	}
 
-	public Collection<V> getNeighbors(V vertex) {
+	public List<V> getNeighbors(V vertex) {
 		if (!containsVertex(vertex))
 			return null;
 
-		Collection<V> neighbors = new ArrayList<V>();
+		List<V> neighbors = new LinkedList<V>();
 		neighbors.addAll(getPreds_internal(vertex));
 		neighbors.addAll(getSuccs_internal(vertex));
+
 		return neighbors;
 	}
 	
@@ -218,7 +213,7 @@ public class MyDirectedSparseGraph<V, E> extends AbstractTypedGraph<V, E> implem
 		return neighbors;
 	}
 
-	public List<E> getIncidentEdges(V vertex) {
+	public List<E>  getIncidentEdges(V vertex) {
 		if (!containsVertex(vertex))
 			return null;
 
@@ -279,8 +274,9 @@ public class MyDirectedSparseGraph<V, E> extends AbstractTypedGraph<V, E> implem
 	 */
 	@Override
 	public int getNeighborCount(V vertex) {
-		int size = vertices.get(vertex).getFirst().size() + vertices.get(vertex).getSecond().size();
-		return size;
+		//int size = vertices.get(vertex).getFirst().size() + vertices.get(vertex).getSecond().size();
+
+		return getNeighbors(vertex).size();
 	}
 
 }

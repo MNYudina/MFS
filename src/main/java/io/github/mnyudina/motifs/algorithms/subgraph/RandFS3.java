@@ -20,9 +20,9 @@ import io.github.mnyudina.motifs.exception.UnsupportedEdgeTypeException;
  * This is parallel version of 3-size undirected subgraphs counter which uses
  * random carcasses sampling algorithm.
  * 
- * @author Yudin Evgeniy
+ * @author Yudin Evgeniy, Gleepa
  */
-public class RandMSF3Dir<V, E>  implements GraphStatsOperation {
+public class RandFS3<V, E>  implements GraphStatsOperation {
 	private boolean isParallel;
 
 	Map<Integer, VertexLayerParameters<V>> vertexLayers;
@@ -100,7 +100,7 @@ public class RandMSF3Dir<V, E>  implements GraphStatsOperation {
      * @param graph the graph
      * @param numberOfRuns number of runs of sampling algorithm 
      */
-	public RandMSF3Dir(Graph<V, E> graph, int numberOfRuns, boolean isParallel) {
+	public RandFS3(Graph<V, E> graph, int numberOfRuns, boolean isParallel) {
         this.graph = graph;
         this.numberOfRuns = numberOfRuns;
 		this.isParallel =isParallel;
@@ -109,16 +109,13 @@ public class RandMSF3Dir<V, E>  implements GraphStatsOperation {
 	
 	/**
 	 * 
-	 * @author Yudin Evgeniy
+	 * @author Yudin Evgeniy, Gleepa
 	 * 
 	 */
 	public void execute() throws GraphStatsException {
 		if (graph.getDefaultEdgeType() == EdgeType.UNDIRECTED) {
 			throw new UnsupportedEdgeTypeException("The parallel version of 3-size subgraphs counter which uses full enumeration algorithm does not work with " + graph.getDefaultEdgeType() + " graph.");
 		}
-
-
-
 		Collection<V> vertices = graph.getVertices();
 		vertexLayers = new HashMap<>();
 		int numberOfVertexNeubor;
@@ -156,7 +153,6 @@ public class RandMSF3Dir<V, E>  implements GraphStatsOperation {
     	for (int i = 0; i < numberOfRuns; i++) {
     		resultsOfRuns.add(0);
 		}
-    	//System.out.println("���������� ������"+	    (System.currentTimeMillis()-t1));
     	if(isParallel){
     		resultsOfRuns.stream().parallel().forEach(this::FixMass);
     	}else{

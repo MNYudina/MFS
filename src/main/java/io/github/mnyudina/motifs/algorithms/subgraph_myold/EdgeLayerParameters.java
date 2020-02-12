@@ -1,4 +1,4 @@
-package io.github.mnyudina.motifs.algorithms.subgraph;
+package io.github.mnyudina.motifs.algorithms.subgraph_myold;
 
 import java.util.ArrayList;
 import java.util.List;
