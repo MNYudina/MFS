@@ -48,7 +48,7 @@ public class Main {
      * @author Gleepa
      * @param args input arguments
      */
-    public static void main(String[] args) {
+    public static void main11(String[] args) {
     	String inputArgs = "";
     	
     	for (String string : args) {
@@ -214,7 +214,7 @@ public class Main {
     }
     private static Graph<String, Long> loadGraphLongEdgeList(String path) throws IOException {
         BufferedReader br = null;
-        Graph<String, Long> gr = new MyDirectedSparseGraph<>();
+        Graph<String, Long> gr = new MySparseGraph<>();
         String sCurrentLine;
             br = new BufferedReader(new FileReader(path));
             int i=0;
@@ -228,26 +228,26 @@ public class Main {
         return gr;
     }
     //_DEBUG
-    public static void main_DEBUG(String[] args) throws IOException, GraphStatsException { // for DEBUG
+    public static void main(String[] args) throws IOException, GraphStatsException { // for DEBUG
         Graph<Integer, Integer> graph;
-        //String path="graphs\\PathwayCommons.net";
+        String path="graphs\\PathwayCommons.net";
        // String path="graphs\\my_polBlog.net";
-        String path="graphs\\GenReg.net";
+      //  String path="graphs\\GenReg.net";
      //   String path="graphs\\MyAs.net";
 
      //   graph= new PajekNetReader<>(createIntegerFactory(), createIntegerFactory()).load(path, new MyDirectedSparseGraph<>());//AdjacencyListGraph
-       graph=new PajekNetReader<>(createIntegerFactory(), createIntegerFactory()).load(path, new MySparseGraph<>());//AdjacencyListGraph
-        // graph = initGraphEdgelistLong("C:\\1\\G+.txt");
+      // graph=new PajekNetReader<>(createIntegerFactory(), createIntegerFactory()).load(path, new MySparseGraph<>());//AdjacencyListGraph
+        graph = initGraphEdgelistLong("graphs\\G+.txt");
 
         System.out.println(graph.getEdgeCount());
         System.out.println(graph.getVertexCount());
-        //System.out.println(graph);
+        System.out.println(graph);
 
 
         long startTime = System.nanoTime();
        // RandMSF4DirOpt p4= new RandMSF4DirOpt<>(graph,10000,true);
       //  RandSF4_old p4= new RandSF4_old<>(graph,10000);
-        RandSF4 p4= new RandSF4<>(graph,10000);
+        RandSF4 p4= new RandSF4<>(graph,100000);
       // RandSF4_new2 p4= new RandSF4_new2<>(graph,10000);
       // RandSF4_new p4= new RandSF4_new<>(graph,1000);
        // RandMSF4Dir p4= new RandMSF4Dir<>(graph,1000);

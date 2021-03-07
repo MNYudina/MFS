@@ -21,6 +21,11 @@ public class RandSF4<V, E> implements GraphStatsOperation {
     private boolean isParallel;
     Map<Integer, VertexLayerParameters<V>> vertexLayers;
     Map<E, Double> edgeProbs;
+    double[] D1 = new double[218];
+    double[] D2= new double[218];
+    double[] n1 = new double[218];
+    double[] n2= new double[218];
+
     double[] massKoefL = {0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 2, 1, 1, 2, 2, 4, 6, 6, 0, 0, 1, 1, 1, 1, 1, 1, 2,
             1, 2, 1, 1, 2, 2, 2, 2, 0, 1, 1, 2, 1, 2, 1, 1, 2, 2, 2, 2, 2, 4, 6, 4, 6, 2, 2, 6, 6, 6, 6, 1, 2, 2, 2, 4,
             6, 4, 6, 6, 6, 6, 4, 6, 6, 1, 2, 6, 2, 6, 6, 6, 12, 12, 6, 6, 12, 12, 12, 12, 12, 1, 1, 1, 2, 1, 2, 1, 2, 1,
@@ -231,127 +236,6 @@ public class RandSF4<V, E> implements GraphStatsOperation {
 
     Random randomGenerator = new Random();
 
-    /**
-     * Method does random selection of branch-frame
-     *
-     * @return code of random motif with 4 verticies
-
-    private int searchLapka() {
-        double randomDoubleValue = randomGenerator.nextDouble();
-        while (randomDoubleValue == 0.0) {
-            randomDoubleValue = randomGenerator.nextDouble();
-        }
-        double borderOfProbability = 0.0;
-        VertexLayerParameters<V> selectedVertexLayer = new VertexLayerParameters<>();
-
-        // Choose a layer of vertices taking into account the probabilities of
-        // layers selection
-        for (Entry<Integer, VertexLayerParameters<V>> vertexLayer : vertexLayers.entrySet()) {
-            borderOfProbability += vertexLayer.getValue().getProbability();
-            if (randomDoubleValue < borderOfProbability) {
-                selectedVertexLayer = vertexLayer.getValue();
-                break;
-            }
-        }
-
-        V v1 = selectedVertexLayer.getVerticies()
-                .get(randomGenerator.nextInt(selectedVertexLayer.getVerticies().size()));
-        List<V> nei_list=graph.getNeighbors(v1);
-
-        int index1 = randomGenerator.nextInt(nei_list.size());
-        int index2;// = randomGenerator.nextInt((index1+nei_list.size()-1)%nei_list.size());
-        int index3;
-        do {
-            index2 = randomGenerator.nextInt(nei_list.size());
-            index3 = randomGenerator.nextInt(nei_list.size());
-        }   while ((index3!=index2) && (index3!=index1)&&(index1!=index2));
-
-        V v2 = nei_list.get(index1);
-        V v3= nei_list.get(index2);
-        V v4=nei_list.get(index3);;
-
-
-        V[] vert = (V[]) new Object[4];
-        vert[0] = v1;
-        vert[1] = v2;
-        vert[2] = v3;
-        vert[3] = v4;
-        int code = 0;
-        for (int i = 0; i < vert.length - 1; i++) {
-            for (int j = i + 1; j < vert.length; j++) {
-                E o1 = graph.findEdge(vert[i], vert[j]);
-                if (o1 != null)
-                    code |= arr_idx[4 * i + j];
-                E o2 = graph.findEdge(vert[j], vert[i]);
-                if (o2 != null)
-                    code |= arr_idx[4 * j + i];
-            }
-        }
-        return arrcode[code];
-    }
-    /**
-     * Method does random selection of path-frame
-     *
-     * @return code of random motif with 4 verticies
-
-    private int searchScobka() {
-        double randomDoubleValue = randomGenerator.nextDouble();
-        while (randomDoubleValue == 0.0) {
-            randomDoubleValue = randomGenerator.nextDouble();
-        }
-        double borderOfProbability = 0.0;
-        E selectedEdge = null;
-
-        // Choose a layer of edges taking into account the probabilities of
-        // layers selection
-        for (Entry<E,Double> edge : edgeProbs.entrySet()) {
-            if (edge.getValue() < 0) {
-                throw new IllegalStateException("Negative probability!");
-
-            }
-            borderOfProbability += edge.getValue();
-            if (randomDoubleValue < borderOfProbability) {
-                selectedEdge = edge.getKey();
-                break;
-            }
-        }
-
-        // Get endpoints of the edge
-        V v1 = graph.getEndpoints(selectedEdge).getFirst();
-        V v2 = graph.getEndpoints(selectedEdge).getSecond();
-        if(v1.equals(v2)) throw new IllegalStateException("Не должно быть петель");
-        V v3, v4;
-
-        // Generate a list of successors of the endpoints
-        //List<E> neigbours1 = (List) graph.getNeighbors(v1);
-		List<V> neigbours1 = graph.getNeighbors(v1);
-		List<V> neigbours2 =  graph.getNeighbors(v2);
-
-        // Choose 2 successors of the endpoints randomly
-        do {
-			v3 = neigbours1.get(randomGenerator.nextInt(neigbours1.size()));
-			v4 = neigbours2.get(randomGenerator.nextInt(neigbours2.size()));
-		}
-        while (!v3.equals(v2) && !v4.equals(v1));
-
-        V[] vert = (V[]) new Object[4];
-        vert[0] = v1;
-        vert[1] = v2;
-        vert[2] = v3;
-        vert[3] = v4;
-        int code = 0;
-        for (int i = 0; i < vert.length - 1; i++) {
-            for (int j = i + 1; j < vert.length; j++) {
-                E o1 = graph.findEdge(vert[i], vert[j]);
-                if (o1 != null)
-                    code |= arr_idx[4 * i + j];
-                E o2 = graph.findEdge(vert[j], vert[i]);
-                if (o2 != null)
-                    code |= arr_idx[4 * j + i];
-            }
-        }
-        return arrcode[code];
-    }*/
     public int searchLapka() {
         double randomDoubleValue = randomGenerator.nextDouble();
         while (randomDoubleValue == 0.0) {
@@ -494,11 +378,6 @@ public class RandSF4<V, E> implements GraphStatsOperation {
      * @author Gleepa
      */
     public void execute() throws GraphStatsException {
-        // only if DirectedEdges
-        if (graph.getDefaultEdgeType() == EdgeType.UNDIRECTED) {
-            throw new UnsupportedEdgeTypeException("The subgraphs counter which uses  MFS algorithm does not work with " + graph.getDefaultEdgeType() + " graph.");
-        }
-
 //////////////////// Prepare Branch frames  ////////////////////////////////////
         Collection<V> vertices = graph.getVertices();
         vertexLayers = new HashMap<>();
@@ -554,95 +433,49 @@ public class RandSF4<V, E> implements GraphStatsOperation {
         }
 
 //////////////////// Results Processing ////////////////////////////////////
-        double D1,D2,lyamda,D,Sigma;
         //System.out.println("numberOfCarcasScobka:"+numberOfCarcasScobka);
         //System.out.println("numberOfCarcasLapka:"+numberOfCarcasLapka);
+        double lyamda,D,Sigma;
 
         for (int i = 0; i < motifs.length; i++) {
             //if(massKoefL[i]==0) continue;
             //if(massKoefR[i]==0) continue;
 
-            D1 = (numberOfCarcasScobka/numberOfRunsScoba) * (numberOfCarcasScobka / numberOfRunsScoba)
+            D1[i] = (numberOfCarcasScobka/numberOfRunsScoba) * (numberOfCarcasScobka / numberOfRunsScoba)
                     * motifsScobka[i] / massKoefL[i]
                     * (1. - motifsScobka[i] / (massKoefL[i]) / numberOfRunsScoba);
-            D2 = (numberOfCarcasLapka/numberOfRunsLapka) * (numberOfCarcasLapka / numberOfRunsLapka)
+            D2[i] = (numberOfCarcasLapka/numberOfRunsLapka) * (numberOfCarcasLapka / numberOfRunsLapka)
                     * (motifsLapka[i] / massKoefR[i])
                     * (1 - motifsLapka[i] / (massKoefR[i]) / numberOfRunsLapka);
 
-            double n1 = motifsScobka[i] * (numberOfCarcasScobka / massKoefL[i]/ numberOfRunsScoba);
-            double n2 = motifsLapka[i] * (numberOfCarcasLapka / massKoefR[i] /numberOfRunsLapka);
+            n1[i] = motifsScobka[i] * (numberOfCarcasScobka / massKoefL[i]/ numberOfRunsScoba);
+            n2[i]= motifsLapka[i] * (numberOfCarcasLapka / massKoefR[i] /numberOfRunsLapka);
 
             lyamda = 0;
-            if(n1<-0.1||n2<-0.1) throw new ArithmeticException();
+            if(n1[i]<-0.1||n2[i]<-0.1) throw new ArithmeticException();
 
-            if (n2>= 0.1 && n1 >=0.1) {
-                lyamda = D1 * n2 / (D1 * n2 + D2 * n1);
-                D = (1 - lyamda) * (1 - lyamda) * D1 + lyamda * lyamda * D2;
+            if (n2[i]>= 0.1 && n1[i] >=0.1) {
+                lyamda = D1[i] * n2[i] / (D1[i] * n2[i] + D2[i] * n1[i]);
+                D = (1 - lyamda) * (1 - lyamda) * D1[i] + lyamda * lyamda * D2[i];
                 Sigma = Math.sqrt(D);
                 sigmas[i] = Sigma;
-                motifs[i] = (n1 + lyamda * (n2 - n1));
+                motifs[i] = (n1[i] + lyamda * (n2[i] - n1[i]));
             }
-            else if (n1< 0.1 && n2 >=0.1) {
-                D = D2;
+            else if (n1[i]< 0.1 && n2[i] >=0.1) {
+                D = D2[i];
                 Sigma = Math.sqrt(D);
                 sigmas[i] = Sigma;
-                motifs[i] = n2;
+                motifs[i] = n2[i];
             }
-            else if(n1>= 0.1 && n2 <=0.1) {
+            else if(n1[i]>= 0.1 && n2[i] <=0.1) {
                 // System.out.println("����� ���� �� ������");
-                D = D1;
+                D = D1[i];
                 Sigma = Math.sqrt(D);
                 sigmas[i] = Sigma;
-                motifs[i] = n1;
+                motifs[i] = n1[i];
             }
         }
-      /*  double D1, D2, lyamda, D, Sigma;
-        double sum = 0., num = 0.;
-        for (int i = 0; i < motifs.length; i++) {
 
-            D1 = (numberOfCarcasScobka / numberOfRunsScoba) * (numberOfCarcasScobka / numberOfRunsScoba)
-                    * motifsScobka[i] / massKoefL[i] / massKoefL[i] * (1. - motifsScobka[i] / numberOfRunsScoba);
-            D2 = (numberOfCarcasLapka / numberOfRunsLapka) * (numberOfCarcasLapka / numberOfRunsLapka)
-                    * (motifsLapka[i] / massKoefR[i] / massKoefR[i]) * (1 - motifsLapka[i] / numberOfRunsLapka);
-
-            double n1 = motifsScobka[i] * (numberOfCarcasScobka / massKoefL[i] / numberOfRunsScoba);
-            double n2 = motifsLapka[i] * (numberOfCarcasLapka / massKoefR[i] / numberOfRunsLapka);
-
-            if (n1 < -0.1 || n2 < -0.1)
-                throw new ArithmeticException();
-
-            if (n2 >= 0.1 && n1 >= 0.1) {
-                if (D1 > 0 && D2 > 0) {
-                    lyamda = D1 * n2 / (D1 * n2 + D2 * n1);
-                    D = (1 - lyamda) * (1 - lyamda) * D1 + lyamda * lyamda * D2;
-                    Sigma = Math.sqrt(D);
-                    sigmas[i] = Sigma;
-                    motifs[i] = (n1 + lyamda * (n2 - n1));
-                } else if ((Math.abs(n1 - n2) < 1) && (D1 == 0 && D2 == 0)) {
-                    D = D1;
-                    Sigma = Math.sqrt(D);
-                    sigmas[i] = Sigma;
-                    motifs[i] = n1;
-                } else
-                    System.out.println("It's needed to inhance number of experiments");
-            } else if (n1 < 0.1 && n2 >= 0.1) {
-                D = D2;
-                Sigma = Math.sqrt(D);
-                sigmas[i] = Sigma;
-                motifs[i] = n2;
-            } else if (n1 >= 0.1 && n2 <= 0.1) {
-                // System.out.println("Wrong");
-                D = D1;
-                Sigma = Math.sqrt(D);
-                sigmas[i] = Sigma;
-                motifs[i] = n1;
-            }
-            if (motifs[i] > 0) {
-                num = 1. + num;
-                sum = sum + sigmas[i] / (double) motifs[i];
-            }
-
-        }*/
 //////////////////////////////           END       /////////////////////////////////////////////
     }
 
@@ -650,7 +483,7 @@ public class RandSF4<V, E> implements GraphStatsOperation {
         String str = "                 4-motifs\nid\t\t num\t\t\t\t(+/-) 3 sigma \n";
         for (int i = 0; i < motifs.length; i++) {
             if (motifs[i] != 0)
-                str = str + i + ":\t" + motifs[i] + "\t(+/-)" + 3 * sigmas[i] + "\n";
+                str = str + i + ":\t" + motifs[i] + "\t(+/-)" + 3 * sigmas[i] + " ;" +D1[i]+ " ;" +D2[i]+ " ;" +n1[i]+ " ;" +n2[i]+"\n";
         }
         return str;
 

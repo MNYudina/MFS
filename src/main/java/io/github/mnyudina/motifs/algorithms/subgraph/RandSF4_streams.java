@@ -337,12 +337,12 @@ public class RandSF4_streams<V, E> implements GraphStatsOperation {
         V v3 = neigbours1.get(randomGenerator.nextInt(neigbours1.size()));
         V v4 = neigbours2.get(randomGenerator.nextInt(neigbours2.size()));
 
-/*
+
         if (v3.equals(v4) ){
             System.out.println("dddd!");
             return 0;
         };
-*/
+
 
         V[] vert = (V[]) new Object[4];
         vert[0] = v1;
